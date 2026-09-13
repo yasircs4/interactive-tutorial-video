@@ -1,0 +1,9 @@
+node_modules/
+output/
+videos/
+*.mp4
+*.mp3
+*.wav
+.DS_Store
+*.log
+temp/

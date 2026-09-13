@@ -1,0 +1,32 @@
+{
+  "name": "@yasircs4/interactive-tutorial-video",
+  "version": "1.0.0",
+  "description": "Agent skill for interactive Full HD tutorial video recording with visual HUD overlays, localized neural voiceovers, and autonomous YouTube playlist management.",
+  "type": "module",
+  "main": "skills/interactive-tutorial-video/scripts/tutorial_engine.js",
+  "scripts": {
+    "test:example": "node examples/full_tutorial_flow.js"
+  },
+  "keywords": [
+    "agent-skill",
+    "playwright",
+    "video-automation",
+    "edge-tts",
+    "youtube-automation",
+    "interactive-tutorials",
+    "tutorial-engine"
+  ],
+  "author": "Yasir Najeep <info@maisra.net> (https://yasirnajeep.com)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yasircs4/interactive-tutorial-video.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yasircs4/interactive-tutorial-video/issues"
+  },
+  "homepage": "https://github.com/yasircs4/interactive-tutorial-video#readme",
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

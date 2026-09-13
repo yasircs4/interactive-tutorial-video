@@ -1,0 +1,18 @@
+{
+  "channelId": "UCKfnpnZhtsqSIX-jMandGPg",
+  "headless": true,
+  "videos": [
+    {
+      "file": "/path/to/01_pos_checkout.mp4",
+      "title": "01 - POS Checkout & Receipt Printing | Shop Tutorial",
+      "description": "Step-by-step interactive tutorial for cashiers:\n1. Select items from categories.\n2. Apply discounts and adjust quantities.\n3. Complete cash payment and print receipt.",
+      "visibility": "unlisted"
+    },
+    {
+      "file": "/path/to/02_create_product.mp4",
+      "title": "02 - Adding Products and Barcodes | Shop Tutorial",
+      "description": "Step-by-step interactive tutorial for inventory management:\n1. Open Products screen.\n2. Enter title, cost, and sales price.\n3. Scan barcode and save.",
+      "visibility": "unlisted"
+    }
+  ]
+}

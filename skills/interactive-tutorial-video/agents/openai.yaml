@@ -1,0 +1,4 @@
+interface:
+  display_name: "Interactive Tutorial Video"
+  short_description: "Produce HQ interactive tutorial videos and automate YouTube uploads"
+  default_prompt: "Use $interactive-tutorial-video to record interactive tutorial videos with animated visual overlays, synchronized neural voiceovers, and autonomous YouTube playlist uploads."

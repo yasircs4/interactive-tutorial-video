@@ -109,6 +109,7 @@ export async function uploadVideos(config) {
   console.log(`[youtube_uploader] Loaded ${cookies.length} session cookies.`);
 
   const browser = await chromium.launch({
+    channel: "chrome",
     headless: headless,
     args: ["--no-sandbox", "--disable-blink-features=AutomationControlled"],
   });

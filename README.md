@@ -39,11 +39,11 @@ This pipeline was used in production to produce and deliver a complete 5-video t
 
 - **Unlisted YouTube Playlist:** [Watch on YouTube](https://www.youtube.com/playlist?list=PLE7Mvo3W8zQY)
 - **Included Guides:**
-  1. Point of Sale & Invoicing (`https://youtu.be/pYSKsM36a6U`)
-  2. Adding Products & Barcodes (`https://youtu.be/Fk6MNPHcovY`)
-  3. Daily Sales Reports & Inventory (`https://youtu.be/i09uR8dsTK8`)
-  4. Cash Drawer Closing & Expenses (`https://youtu.be/UgEeuq5iZ0I`)
-  5. Returns & Exchanges (`https://youtu.be/Tlv0EqR5l1s`)
+  1. Point of Sale & Invoicing (`https://youtu.be/DU6fOkoATzk`)
+  2. Adding Products & Barcodes (`https://youtu.be/tCemwfTTW6s`)
+  3. Daily Sales Reports & Inventory (`https://youtu.be/EeWSkUK_YKg`)
+  4. Cash Drawer Closing & Expenses (`https://youtu.be/NEKC6iaiQtU`)
+  5. Returns & Exchanges (`https://youtu.be/C2gSl_7LVdE`)
 
 ---
 

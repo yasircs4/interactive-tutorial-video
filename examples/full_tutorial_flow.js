@@ -20,7 +20,7 @@ async function recordTutorial() {
   // Step 1: Login
   await showBanner(page, "Step 1 of 3", "System Authentication", "Enter your credentials to access the POS terminal", 2000);
   await typeWithFocus(page, "input#email", "cashier@example.com", { label: "Enter Cashier Email" });
-  await typeWithFocus(page, "input#password", "secret123", { label: "Enter Password" });
+  await typeWithFocus(page, "input#password", "••••••••••••", { label: "Enter Password" });
   await highlightAndClick(page, "button#login-btn", { label: "Click Login to Continue", shape: "rect" });
 
   // Step 2: Select Product

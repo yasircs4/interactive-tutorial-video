@@ -1,5 +1,13 @@
 # Interactive Tutorial Video
 
+<div align="center">
+  <video src="assets/showcase_demo.mp4" controls width="100%" poster="assets/cover.svg">
+    Your browser does not support the video tag.
+  </video>
+  <p><em>Full HD 1080p interactive tutorial demonstrating pulsating spotlight rings, smart virtual cursor, click ripple waves, floating tooltip pills, and synchronized neural voiceover.</em></p>
+  <p>Created by <strong>Yasir Najeep</strong> (<a href="https://yasirnajeep.com/">yasirnajeep.com</a> | <a href="mailto:info@yasirnajeep.com">info@yasirnajeep.com</a>)</p>
+</div>
+
 [![skills.sh installs](https://skills.sh/b/yasircs4/interactive-tutorial-video)](https://skills.sh/yasircs4/interactive-tutorial-video)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
 [![Format: Agent Skills](https://img.shields.io/badge/Agent_Skills-Compliant-blue.svg)](https://agentskills.io/specification)
@@ -7,17 +15,6 @@
 An open Agent Skill for autonomously recording interactive full HD tutorial videos from web applications, synchronizing localized neural voiceovers, and publishing them directly to YouTube with automated playlist organization.
 
 Built for AI coding agents (Claude Code, OpenAI Codex, Cursor, Windsurf, Trae, Roo, Qoder, and others) to transform routine software walkthroughs into engaging, high-retention video guides.
-
----
-
-## Live Interactive Showcase
-
-<div align="center">
-  <video src="assets/showcase_demo.mp4" controls width="100%" poster="assets/cover.svg">
-    Your browser does not support the video tag.
-  </video>
-  <p><em>Full HD 1080p interactive tutorial demonstrating pulsating spotlight rings, smart virtual cursor, click ripple waves, floating tooltip pills, and synchronized neural voiceover.</em></p>
-</div>
 
 ---
 
@@ -161,6 +158,6 @@ interactive-tutorial-video/
 
 ## Author & License
 
-Created by **Yasir Najeep** ([yasirnajeep.com](https://yasirnajeep.com) | `info@maisra.net`).
+Created by **Yasir Najeep** ([yasirnajeep.com](https://yasirnajeep.com/) | [info@yasirnajeep.com](mailto:info@yasirnajeep.com)).
 
 Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.

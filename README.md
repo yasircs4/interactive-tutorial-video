@@ -10,6 +10,17 @@ Built for AI coding agents (Claude Code, OpenAI Codex, Cursor, Windsurf, Trae, R
 
 ---
 
+## Live Interactive Showcase
+
+<div align="center">
+  <video src="assets/showcase_demo.mp4" controls width="100%" poster="assets/cover.svg">
+    Your browser does not support the video tag.
+  </video>
+  <p><em>Full HD 1080p interactive tutorial demonstrating pulsating spotlight rings, smart virtual cursor, click ripple waves, floating tooltip pills, and synchronized neural voiceover.</em></p>
+</div>
+
+---
+
 ## Why this skill?
 
 Automated browser recordings typically look flat: viewers struggle to locate which button was pressed or why a certain menu opened, and synthetic voices often sound unnatural or out of sync.

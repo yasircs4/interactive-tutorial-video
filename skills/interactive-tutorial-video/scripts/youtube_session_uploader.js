@@ -20,72 +20,106 @@ import { chromium } from "playwright";
  * Extract and decrypt Google and YouTube cookies from macOS Google Chrome.
  */
 export function extractChromeCookies() {
-  const cookieDbOriginal = path.join(
-    os.homedir(),
-    "Library/Application Support/Google/Chrome/Default/Cookies"
-  );
-  if (!fs.existsSync(cookieDbOriginal)) {
-    throw new Error(`Chrome Cookies database not found at: ${cookieDbOriginal}`);
-  }
-
-  const pw = execSync('security find-generic-password -w -s "Chrome Safe Storage"', {
-    encoding: "utf-8",
-  }).trim();
-
-  const key = crypto.pbkdf2Sync(pw, "saltysalt", 1003, 16, "sha1");
-  const iv = Buffer.alloc(16, 0x20);
-
-  function decrypt(encrypted) {
-    if (!encrypted) return "";
-    let data = Buffer.from(encrypted);
-    if (data.slice(0, 3).toString("ascii") === "v10" || data.slice(0, 3).toString("ascii") === "v11") {
-      data = data.slice(3);
+  const browserConfigs = [
+    {
+      name: "Google Chrome",
+      dbPath: path.join(os.homedir(), "Library/Application Support/Google/Chrome/Default/Cookies"),
+      keychainService: "Chrome Safe Storage"
+    },
+    {
+      name: "Brave Browser",
+      dbPath: path.join(os.homedir(), "Library/Application Support/BraveSoftware/Brave-Browser/Default/Cookies"),
+      keychainService: "Brave Safe Storage"
     }
-    if (data.length % 16 !== 0) return "";
-    const decipher = crypto.createDecipheriv("aes-128-cbc", key, iv);
-    decipher.setAutoPadding(false);
-    let res = decipher.update(data);
-    if (res.length <= 32) return "";
-    const pad = res[res.length - 1];
-    let end = res.length;
-    if (pad > 0 && pad <= 16) {
-      end = res.length - pad;
-    }
-    return res.slice(32, end).toString("utf8");
-  }
+  ];
 
-  const tempDb = path.join(os.tmpdir(), `chrome_cookies_${Date.now()}.db`);
-  fs.copyFileSync(cookieDbOriginal, tempDb);
+  let bestCookies = [];
 
-  const db = new DatabaseSync(tempDb);
-  const rows = db
-    .prepare(
-      "SELECT host_key, name, path, is_secure, is_httponly, encrypted_value FROM cookies WHERE host_key LIKE ? OR host_key LIKE ?"
-    )
-    .all("%google.com%", "%youtube.com%");
+  for (const cfg of browserConfigs) {
+    if (!fs.existsSync(cfg.dbPath)) continue;
 
-  const cookies = [];
-  for (const r of rows) {
+    let pw = "";
     try {
-      const val = decrypt(r.encrypted_value);
-      if (val) {
-        cookies.push({
-          name: r.name,
-          value: val,
-          domain: r.host_key,
-          path: r.path || "/",
-          secure: Boolean(r.is_secure),
-          httpOnly: Boolean(r.is_httponly),
-        });
+      pw = execSync(`security find-generic-password -w -s "${cfg.keychainService}"`, {
+        encoding: "utf-8",
+      }).trim();
+    } catch (e) {
+      continue;
+    }
+    if (!pw) continue;
+
+    const key = crypto.pbkdf2Sync(pw, "saltysalt", 1003, 16, "sha1");
+    const iv = Buffer.alloc(16, 0x20);
+
+    function decrypt(encrypted) {
+      if (!encrypted) return "";
+      let data = Buffer.from(encrypted);
+      if (data.slice(0, 3).toString("ascii") === "v10" || data.slice(0, 3).toString("ascii") === "v11") {
+        data = data.slice(3);
       }
-    } catch (e) {}
+      if (data.length % 16 !== 0) return "";
+      const decipher = crypto.createDecipheriv("aes-128-cbc", key, iv);
+      decipher.setAutoPadding(false);
+      let res = decipher.update(data);
+      if (res.length <= 32) return "";
+      const pad = res[res.length - 1];
+      let end = res.length;
+      if (pad > 0 && pad <= 16) {
+        end = res.length - pad;
+      }
+      return res.slice(32, end).toString("utf8");
+    }
+
+    const tempDb = path.join(os.tmpdir(), `browser_cookies_${Date.now()}_${Math.random().toString(36).substring(7)}.db`);
+    fs.copyFileSync(cfg.dbPath, tempDb);
+
+    try {
+      const db = new DatabaseSync(tempDb);
+      const rows = db
+        .prepare(
+          "SELECT host_key, name, path, is_secure, is_httponly, encrypted_value FROM cookies WHERE host_key LIKE ? OR host_key LIKE ?"
+        )
+        .all("%google.com%", "%youtube.com%");
+
+      const cookies = [];
+      let hasYouTubeLogin = false;
+      for (const r of rows) {
+        try {
+          const val = decrypt(r.encrypted_value);
+          if (val) {
+            if (r.host_key.includes("youtube.com") && (r.name === "LOGIN_INFO" || r.name === "SAPISID" || r.name === "SID")) {
+              hasYouTubeLogin = true;
+            }
+            cookies.push({
+              name: r.name,
+              value: val,
+              domain: r.host_key,
+              path: r.path || "/",
+              secure: Boolean(r.is_secure),
+              httpOnly: Boolean(r.is_httponly),
+            });
+          }
+        } catch (e) {}
+      }
+
+      if (hasYouTubeLogin && cookies.length > 0) {
+        console.log(`[youtube_uploader] Using authenticated YouTube session from ${cfg.name} (${cookies.length} cookies).`);
+        bestCookies = cookies;
+        break;
+      } else if (cookies.length > bestCookies.length) {
+        bestCookies = cookies;
+      }
+    } catch (e) {
+    } finally {
+      try { fs.unlinkSync(tempDb); } catch (e) {}
+    }
   }
 
-  try {
-    fs.unlinkSync(tempDb);
-  } catch (e) {}
+  if (bestCookies.length === 0) {
+    throw new Error("No Google/YouTube cookies found in Chrome or Brave.");
+  }
 
-  return cookies;
+  return bestCookies;
 }
 
 /**
@@ -109,7 +143,6 @@ export async function uploadVideos(config) {
   console.log(`[youtube_uploader] Loaded ${cookies.length} session cookies.`);
 
   const browser = await chromium.launch({
-    channel: "chrome",
     headless: headless,
     args: ["--no-sandbox", "--disable-blink-features=AutomationControlled"],
   });
@@ -117,7 +150,7 @@ export async function uploadVideos(config) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     userAgent:
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
   });
 
   for (const c of cookies) {
@@ -133,7 +166,14 @@ export async function uploadVideos(config) {
 
   console.log(`[youtube_uploader] Navigating to ${studioUrl}...`);
   await page.goto(studioUrl, { waitUntil: "domcontentloaded", timeout: 45000 });
-  await page.waitForTimeout(4000);
+  await page.waitForTimeout(6000);
+
+  const skipBtn = page.locator("a:has-text('SKIP TO YOUTUBE STUDIO'), a:has-text('تخطي إلى استوديو YouTube'), #skip-button").first();
+  if (await skipBtn.isVisible().catch(() => false)) {
+    console.log("[youtube_uploader] Bypassing unsupported browser interstitial...");
+    await skipBtn.click();
+    await page.waitForTimeout(5000);
+  }
 
   const results = [];
 
@@ -142,63 +182,76 @@ export async function uploadVideos(config) {
     console.log(`\n[youtube_uploader] Uploading (${i + 1}/${videos.length}): ${v.title}`);
 
     // Click Create / Upload
-    const createBtn = page.locator("#create-icon, #upload-button, [aria-label*='Create'], [aria-label*='Upload'], ytcp-button:has-text('Create')").first();
+    const createBtn = page.locator("button[aria-label='Create'], button[aria-label='إنشاء'], ytcp-button.ytcpAppHeaderCreateIcon, #upload-button button, [aria-label*='Create'], [aria-label*='Upload'], [aria-label*='إنشاء']").first();
     await createBtn.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
 
-    const uploadOption = page.locator("tp-yt-paper-item:has-text('Upload videos'), ytcp-text-menu:has-text('Upload'), #text-item-0").first();
-    if (await uploadOption.isVisible()) {
+    const uploadOption = page.locator("tp-yt-paper-item:has-text('Upload videos'), tp-yt-paper-item:has-text('تحميل الفيديوهات'), #text-item-0").first();
+    if (await uploadOption.isVisible().catch(() => false)) {
       await uploadOption.click();
-      await page.waitForTimeout(1500);
+      await page.waitForTimeout(2500);
     }
 
     const fileInput = page.locator("input[type=file]").first();
     await fileInput.setInputFiles(v.file);
-    await page.waitForTimeout(7000);
+    await page.waitForTimeout(8000);
 
     // Set Title
-    const titleBox = page.locator("#textbox[aria-label*='title'], [aria-label*='Title'], div#title-textarea #textbox").first();
+    const titleBox = page.locator("#textbox[aria-label*='title'], #textbox[aria-label*='Title'], #textbox[aria-label*='عنوان'], #title-textarea #textbox").first();
+    await titleBox.waitFor({ state: "visible", timeout: 30000 });
     if (await titleBox.isVisible()) {
       await titleBox.fill("");
-      await titleBox.type(v.title, { delay: 10 });
+      await titleBox.type(v.title, { delay: 5 });
     }
 
     // Set Description
     if (v.description) {
-      const descBox = page.locator("#textbox[aria-label*='description'], [aria-label*='Description'], div#description-textarea #textbox").first();
-      if (await descBox.isVisible()) {
+      const descBox = page.locator("#textbox[aria-label*='description'], #textbox[aria-label*='Description'], #textbox[aria-label*='وصف'], #description-textarea #textbox").first();
+      if (await descBox.isVisible().catch(() => false)) {
         await descBox.fill("");
-        await descBox.type(v.description, { delay: 5 });
+        await descBox.type(v.description, { delay: 2 });
       }
     }
 
     // Set "Not made for kids" (COPPA compliance)
     const notForKids = page.locator("tp-yt-paper-radio-button[name='VIDEO_MADE_FOR_KIDS_NOT_MFK'], [name='VIDEO_MADE_FOR_KIDS_NOT_MFK']").first();
-    if (await notForKids.isVisible()) {
-      await notForKids.click();
+    try {
+      await notForKids.click({ force: true, timeout: 5000 });
+    } catch (e) {
+      await page.evaluate(() => {
+        const el = document.querySelector("tp-yt-paper-radio-button[name='VIDEO_MADE_FOR_KIDS_NOT_MFK']");
+        if (el) el.click();
+      });
     }
+    await page.waitForTimeout(1000);
 
     // Advance to Visibility step
     for (let step = 0; step < 3; step++) {
-      const nextBtn = page.locator("#next-button").first();
-      if (await nextBtn.isVisible()) {
-        await nextBtn.click();
-        await page.waitForTimeout(1500);
+      const nextBtn = page.locator("#next-button, ytcp-button#next-button, [aria-label*='Next'], [aria-label*='التالي']").first();
+      try {
+        await nextBtn.click({ force: true, timeout: 5000 });
+      } catch (e) {
+        await page.evaluate(() => {
+          const btn = document.querySelector("#next-button, ytcp-button#next-button");
+          if (btn) btn.click();
+        });
       }
+      await page.waitForTimeout(2000);
     }
 
     // Select Visibility (unlisted default)
     const visibility = v.visibility || "unlisted";
-    if (visibility === "unlisted") {
-      const unlistedRadio = page.locator("tp-yt-paper-radio-button[name='UNLISTED'], [name='UNLISTED']").first();
-      await unlistedRadio.click();
-    } else if (visibility === "public") {
-      const publicRadio = page.locator("tp-yt-paper-radio-button[name='PUBLIC'], [name='PUBLIC']").first();
-      await publicRadio.click();
-    } else {
-      const privateRadio = page.locator("tp-yt-paper-radio-button[name='PRIVATE'], [name='PRIVATE']").first();
-      await privateRadio.click();
+    const radioName = visibility === "public" ? "PUBLIC" : visibility === "private" ? "PRIVATE" : "UNLISTED";
+    const radioBtn = page.locator(`tp-yt-paper-radio-button[name='${radioName}'], [name='${radioName}']`).first();
+    try {
+      await radioBtn.click({ force: true, timeout: 5000 });
+    } catch (e) {
+      await page.evaluate((name) => {
+        const r = document.querySelector(`tp-yt-paper-radio-button[name='${name}']`);
+        if (r) r.click();
+      }, radioName);
     }
+    await page.waitForTimeout(2000);
 
     // Capture Share Link
     let shareUrl = "";
@@ -210,9 +263,16 @@ export async function uploadVideos(config) {
     } catch (e) {}
 
     // Complete Upload
-    const doneBtn = page.locator("#done-button, #save-button").first();
-    await doneBtn.click();
-    await page.waitForTimeout(5000);
+    const doneBtn = page.locator("#done-button, #save-button, ytcp-button#done-button, ytcp-button#save-button, [aria-label*='Save'], [aria-label*='Done'], [aria-label*='حفظ']").first();
+    try {
+      await doneBtn.click({ force: true, timeout: 8000 });
+    } catch (e) {
+      await page.evaluate(() => {
+        const d = document.querySelector("#done-button, #save-button");
+        if (d) d.click();
+      });
+    }
+    await page.waitForTimeout(7000);
 
     if (!shareUrl) {
       try {

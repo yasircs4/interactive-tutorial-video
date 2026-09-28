@@ -10,3 +10,4 @@ videos/
 temp/
 __pycache__/
 *.pyc
+dist_videos/

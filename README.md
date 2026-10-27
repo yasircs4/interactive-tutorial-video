@@ -1,10 +1,11 @@
 # Interactive Tutorial Video
 
 <div align="center">
-  <video src="assets/showcase_demo.mp4" controls width="100%" poster="assets/cover.svg">
-    Your browser does not support the video tag.
-  </video>
-  <p><em>Full HD 1080p interactive tutorial demonstrating pulsating spotlight rings, smart virtual cursor, click ripple waves, floating tooltip pills, and synchronized neural voiceover.</em></p>
+  <a href="https://raw.githubusercontent.com/yasircs4/interactive-tutorial-video/main/assets/showcase_demo.mp4">
+    <img src="assets/cover.svg" width="100%" alt="Interactive Tutorial Video Showcase Banner" />
+  </a>
+  <p>▶️ <strong><a href="https://raw.githubusercontent.com/yasircs4/interactive-tutorial-video/main/assets/showcase_demo.mp4">Watch Showcase Demo (1080p MP4)</a></strong> &nbsp;|&nbsp; 📋 <strong><a href="https://www.youtube.com/playlist?list=PLE7Mvo3W8zQY">Watch YouTube Playlist Suite</a></strong></p>
+  <p><em>Full HD 1080p interactive tutorial demonstrating pulsating spotlight rings, smart virtual cursor, click ripple waves, collision-safe tooltip pills, and synchronized neural voiceovers.</em></p>
   <p>Created by <strong>Yasir Najeep</strong> (<a href="https://yasirnajeep.com/">yasirnajeep.com</a> | <a href="mailto:info@yasirnajeep.com">info@yasirnajeep.com</a>)</p>
 </div>
 
@@ -12,7 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
 [![Format: Agent Skills](https://img.shields.io/badge/Agent_Skills-Compliant-blue.svg)](https://agentskills.io/specification)
 
-An open Agent Skill for autonomously recording interactive full HD tutorial videos from web applications, synchronizing localized neural voiceovers, and publishing them directly to YouTube with automated playlist organization.
+An open Agent Skill for autonomously recording interactive Full HD tutorial videos from web applications, synchronizing localized neural voiceovers, generating automated captions, and publishing them directly to YouTube with verified playlist organization.
 
 Built for AI coding agents (Claude Code, OpenAI Codex, Cursor, Windsurf, Trae, Roo, Qoder, and others) to transform routine software walkthroughs into engaging, high-retention video guides.
 
@@ -22,11 +23,13 @@ Built for AI coding agents (Claude Code, OpenAI Codex, Cursor, Windsurf, Trae, R
 
 Automated browser recordings typically look flat: viewers struggle to locate which button was pressed or why a certain menu opened, and synthetic voices often sound unnatural or out of sync.
 
-`interactive-tutorial-video` delivers a complete three-pillar solution:
+`interactive-tutorial-video` delivers a complete, dependable pipeline:
 
-1. **In-Browser Visual HUD Engine:** Dynamically injects pulsing spotlight halos, a virtual vector cursor with smooth bezier curves, expanding click ripple waves, pointing tooltip pills, and frosted-glass step banners.
-2. **Synchronized Neural Voiceovers:** Generates natural speech across multiple dialects (including Libyan Arabic, Saudi Arabic, Egyptian Arabic, Gulf Arabic, and English) and aligns each audio cue to the exact millisecond using ffmpeg filters.
-3. **Autonomous YouTube Studio Distribution:** Extracts active Chrome sessions on macOS via Keychain decryption to upload Full HD videos and organize them into unlisted or public playlists without OAuth registration or API quota bottlenecks.
+1. **Navigation-Safe In-Browser Visual HUD Engine:** Dynamically injects pulsing spotlight halos, a virtual vector cursor with smooth bezier curves, expanding click ripple waves, pointing tooltip pills (with collision detection and auto-flip), and frosted-glass step banners. Re-injects automatically across multi-page flows via `page.addInitScript`.
+2. **Unified Timeline & Duration-Aware Narration:** Drives recording pacing directly from narration duration (`TutorialSession` / `narrate`). Prevents audio truncation by automatically holding the last video frame if speech exceeds recording duration. Generates synchronized `.srt` and `.vtt` captions and enforces broadcast EBU R128 loudness normalization (`-16 LUFS`).
+3. **Universal H.264 MP4 Transcoding:** Transcodes raw Playwright WebM (VP8/VP9) into standardized, QuickTime/Safari/iOS-compatible 1080p H.264/AAC MP4.
+4. **Verifiable YouTube Publishing & Playlist Management:** Supports both dedicated Playwright profiles/storageState and macOS Keychain session extraction (Node 18+ compatible). Verifies actual publication IDs, maintains an upload ledger to prevent duplicates, and organizes videos into unlisted playlists.
+5. **Mobile 9:16 Shorts Generator:** Converts 16:9 tutorial videos into vertical 9:16 (1080x1920) YouTube Shorts, TikToks, and Instagram Reels with blurred motion background and glassmorphism badges.
 
 ---
 
@@ -71,62 +74,141 @@ npx skills add yasircs4/interactive-tutorial-video -g -a cursor -y
 
 ---
 
-## Quick Start
+## Environment Verification
 
-### 1. In-Browser Recording with Visual Overlays
-
-```javascript
-import { chromium } from "playwright";
-import { setupInteractiveEngine, highlightAndClick, showBanner } from "./skills/interactive-tutorial-video/scripts/tutorial_engine.js";
-
-const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext({
-  recordVideo: { dir: "./videos", size: { width: 1920, height: 1080 } },
-  viewport: { width: 1920, height: 1080 }
-});
-const page = await context.newPage();
-await page.goto("https://my-app.example.com");
-
-// Setup the HUD engine
-await setupInteractiveEngine(page, { accentColor: "#10b981" });
-
-// Display HUD banner
-await showBanner(page, "Step 1", "Create Invoice", "Click here to initialize customer order", 2000);
-
-// Focus and click target with spotlight & animated ripple
-await highlightAndClick(page, "button#new-order", { label: "New Order" });
-
-await context.close();
-await browser.close();
-```
-
-### 2. Add Synchronized Neural Voiceover
+Run the built-in doctor utility to verify Node.js, Python, FFmpeg, edge-tts, Playwright, and disk space:
 
 ```bash
-python3 ./skills/interactive-tutorial-video/scripts/mux_voiceover.py \
-  --video ./videos/tutorial.mp4 \
-  --manifest ./timeline.json \
-  --voice "ar-LY-ImanNeural"
-```
-
-### 3. Upload to YouTube & Create Playlist
-
-```bash
-node ./skills/interactive-tutorial-video/scripts/youtube_session_uploader.js manifest.json
+npm run doctor
 ```
 
 ---
 
-## Technical Details: Zero-Auth macOS Session Extraction
+## Quick Start
 
-On macOS, Google Chrome encrypts session cookies using AES-128-CBC with a master password stored securely in Keychain.
+### 1. In-Browser Recording with Navigation-Safe Overlays
 
-`youtube_session_uploader.js` automates the following sequence:
-1. Queries the Keychain for `Chrome Safe Storage` via the macOS `security` CLI.
-2. Derives the 16-byte key using PBKDF2 (`saltysalt`, 1003 iterations, SHA1).
-3. Safely clones the locked cookie database from `~/Library/Application Support/Google/Chrome/Default/Cookies`.
-4. Decrypts `google.com` and `youtube.com` cookies by stripping the 32-byte HMAC prefix and removing PKCS7 padding.
-5. Injects active authentication state into Playwright, granting instant access to YouTube Studio without SMS codes or OAuth permissions.
+```javascript
+import { chromium } from "playwright";
+import {
+  setupInteractiveEngine,
+  highlight,
+  highlightAndClick,
+  typeWithFocus,
+  showBanner,
+  zoomTo,
+  TutorialSession
+} from "./skills/interactive-tutorial-video/scripts/tutorial_engine.js";
+import { convertToH264 } from "./skills/interactive-tutorial-video/scripts/convert_video.js";
+
+const browser = await chromium.launch({ headless: true });
+const context = await browser.newContext({
+  recordVideo: { dir: "./output/videos", size: { width: 1920, height: 1080 } },
+  viewport: { width: 1920, height: 1080 }
+});
+const page = await context.newPage();
+await page.goto("http://localhost:3000/pos");
+
+const session = new TutorialSession(page, { accentColor: "#10b981" });
+await session.start();
+
+// Narration automatically controls banner and pacing
+await session.narrate("Step one: Select a product to add it to customer ticket.", {
+  banner: { badge: "Step 1", title: "Select Product", subtitle: "Click on any product card" }
+});
+
+// Target is automatically scrolled into view before measurement with optional verification
+await highlightAndClick(page, ".product-card:first-child", {
+  label: "Wireless Headphones",
+  verify: "#pos-cart-badge"
+});
+
+// Selective zoom into dense UI elements
+await zoomTo(page, "input#discount-input", 1.5);
+
+const videoPath = await page.video().path();
+await context.close();
+await browser.close();
+
+// Transcode to standardized H.264 1080p MP4 (30 fps, Stereo AAC)
+convertToH264(videoPath, "./output/videos/tutorial.mp4");
+```
+
+### 2. Synthesize & Mux Synchronized Voiceover with Captions
+
+```bash
+python3 ./skills/interactive-tutorial-video/scripts/mux_voiceover.py \
+  --video ./output/videos/tutorial.mp4 \
+  --manifest ./output/videos/demo_timeline.json \
+  --output ./output/videos/tutorial_voiced.mp4 \
+  --voice "ar-LY-ImanNeural" \
+  --export-captions
+```
+
+### 3. Verify Broadcast Quality (EBU R128 Loudness & Codecs)
+
+```bash
+npm run quality-report -- --video ./output/videos/tutorial_voiced.mp4
+```
+
+### 4. Create 9:16 Vertical Short (YouTube Shorts / Reels)
+
+```bash
+npm run build:shorts -- ./output/videos/tutorial_voiced.mp4 ./output/videos/short.mp4 --title "POS Tutorial"
+```
+
+### 5. Publish to YouTube Studio & Organize Playlist
+
+```bash
+node ./skills/interactive-tutorial-video/scripts/youtube_session_uploader.js upload_plan.json
+```
+
+---
+
+## Technical Architecture
+
+```text
++-----------------------------------------------------------------------------------+
+| 1. RECORDING PHASE (Playwright + page.addInitScript DOM Overlay Injection)         |
+|    - Dynamic accent glow calculation (hex/rgb to rgba tokens)                     |
+|    - Smart Virtual Cursor follows actions smoothly via cubic-bezier transitions   |
+|    - Scroll-before-measurement prevents off-screen misplaced highlights          |
+|    - Collision detection automatically flips tooltips near screen edges           |
+|    - Responsive HUD banners stay within mobile (390px) and desktop boundaries     |
+|    - Output: Raw 1080p WebM recording + timeline manifest                         |
++-----------------------------------------------------------------------------------+
+                                       |
+                                       v
++-----------------------------------------------------------------------------------+
+| 2. AUDIO SYNTHESIS & TIMELINE MUXING (edge-tts + ffmpeg)                          |
+|    - Synthesize discrete voice segments (Libyan, Saudi, Egyptian, US/UK English)  |
+|    - Transcode VP8/VP9 WebM to universal H.264 MP4 (yuv420p, +faststart)         |
+|    - Duration guard: holds final video frame if narration exceeds recording time  |
+|    - Apply EBU R128 loudness normalization (-16 LUFS) & AAC audio encoding        |
+|    - Export synchronized WebVTT & SubRip (.srt) caption files                     |
++-----------------------------------------------------------------------------------+
+                                       |
+                                       v
++-----------------------------------------------------------------------------------+
+| 3. AUTONOMOUS YOUTUBE STUDIO DISTRIBUTION (Playwright + Profile / Keychain)       |
+|    - Supports Playwright storageState or macOS Chrome/Brave cookie extraction     |
+|    - Universal SQLite support across Node 18, 20, 22, 24+ (built-in fallback)     |
+|    - SHA-256 upload ledger prevents accidental re-uploads                         |
+|    - Automated playlist creation and membership verification                      |
+|    - Confirms published video ID via provider readback before exit                |
++-----------------------------------------------------------------------------------+
+```
+
+---
+
+## Quality Checklist for Produced Tutorials
+
+- **Resolution:** Full HD 1080p (1920x1080 horizontal or 1080x1920 vertical).
+- **Video Codec:** H.264 (`yuv420p`, high profile, `+faststart` web-optimized).
+- **Audio:** AAC 192kbps (mono or stereo), normalized to EBU R128 target (`-16 LUFS`).
+- **Pacing:** Minimum 1000ms pause after major transitions; narration drives timing.
+- **Safety:** Tooltips automatically reposition if placed in top 70px; HTML labels escaped against XSS.
+- **Deduplication:** Upload ledger records file hashes to guarantee idempotent runs.
 
 ---
 
@@ -134,6 +216,9 @@ On macOS, Google Chrome encrypts session cookies using AES-128-CBC with a master
 
 ```text
 interactive-tutorial-video/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── README.md
 ├── LICENSE
 ├── CONTRIBUTING.md
@@ -147,11 +232,25 @@ interactive-tutorial-video/
 │       └── scripts/
 │           ├── tutorial_engine.js
 │           ├── mux_voiceover.py
-│           └── youtube_session_uploader.js
+│           ├── youtube_session_uploader.js
+│           ├── convert_video.js
+│           ├── build_shorts.js
+│           ├── build_shorts.py
+│           ├── multilingual_generator.py
+│           ├── doctor.js
+│           └── quality_report.py
+├── tests/
+│   ├── tutorial_engine.test.js
+│   ├── test_mux_voiceover.py
+│   ├── test_quality_report.py
+│   ├── uploader.test.js
+│   └── doctor.test.js
 └── examples/
     ├── full_tutorial_flow.js
     ├── manifest_example.json
-    └── prompts.md
+    ├── prompts.md
+    └── fixture/
+        └── demo_app.html
 ```
 
 ---

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taiba Store POS - Tutorial Demo Fixture</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand { font-size: 20px; font-weight: 800; color: #34d399; display: flex; align-items: center; gap: 8px; }
+    .nav-actions { display: flex; gap: 12px; }
+
+    button {
+      cursor: pointer;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-primary { background: var(--accent); color: white; padding: 10px 20px; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 16px; }
+
+    main { padding: 32px 24px; max-width: 1280px; margin: 0 auto; width: 100%; flex: 1; }
+
+    .login-box {
+      max-width: 420px;
+      margin: 60px auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .login-box h2 { margin-bottom: 8px; font-size: 24px; }
+    .login-box p { color: var(--text-muted); margin-bottom: 24px; font-size: 14px; }
+
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+    .field input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: white;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+    }
+    .field input:focus { border-color: var(--accent); }
+
+    .pos-view { display: none; }
+    .pos-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+
+    .product-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .product-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .product-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .product-card .img-placeholder { height: 110px; background: #0f172a; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+    .product-card h4 { font-size: 16px; margin-bottom: 4px; }
+    .product-card .price { color: #34d399; font-weight: 700; font-size: 15px; }
+
+    .cart-pane {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: fit-content;
+    }
+
+    .cart-items { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 0; min-height: 100px; }
+    .cart-row { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; }
+
+    .tall-spacer { height: 750px; background: linear-gradient(180deg, transparent, #1e293b22); border-radius: 12px; margin: 32px 0; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+
+    .checkout-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 80px;
+    }
+
+    .receipt-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .receipt-card {
+      background: #ffffff;
+      color: #0f172a;
+      width: 360px;
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+    .receipt-card h3 { color: #059669; font-size: 20px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">🛒 Taiba POS System</div>
+    <div class="nav-actions">
+      <button id="user-profile" class="btn-outline">👤 Cashier Admin</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Screen 1: Login -->
+    <div id="login-section" class="login-box">
+      <h2>Cashier Terminal Sign-In</h2>
+      <p>Enter your store operator credentials to begin session</p>
+      <form id="login-form" onsubmit="event.preventDefault(); handleLogin();">
+        <div class="field">
+          <label for="email">Cashier Email</label>
+          <input id="email" type="email" placeholder="cashier@taiba.ly" value="cashier@taiba.ly">
+        </div>
+        <div class="field">
+          <label for="password">Security PIN / Password</label>
+          <input id="password" type="password" placeholder="••••••••••••" value="12345678">
+        </div>
+        <button id="login-btn" type="submit" class="btn-primary" style="width: 100%;">Authorize Terminal</button>
+      </form>
+    </div>
+
+    <!-- Screen 2: POS Catalog & Checkout -->
+    <div id="pos-section" class="pos-view">
+      <div class="pos-grid">
+        <div class="catalog-pane">
+          <h2 style="margin-bottom: 16px;">Product Catalog / كتالوج المنتجات</h2>
+          <div class="product-cards">
+            <div class="product-card" onclick="addToCart('Wireless Headphones', 45.00)">
+              <div class="img-placeholder">🎧</div>
+              <h4>Wireless Headphones</h4>
+              <div class="price">45.00 LYD</div>
+            </div>
+            <div class="product-card" onclick="addToCart('Mechanical Keyboard', 85.00)">
+              <div class="img-placeholder">⌨️</div>
+              <h4>Mechanical Keyboard</h4>
+              <div class="price">85.00 LYD</div>
+            </div>
+            <div class="product-card" onclick="addToCart('Gaming Mouse', 25.00)">
+              <div class="img-placeholder">🖱️</div>
+              <h4>Gaming Mouse</h4>
+              <div class="price">25.00 LYD</div>
+            </div>
+            <div class="product-card" onclick="addToCart('USB-C Fast Charger', 15.00)">
+              <div class="img-placeholder">🔌</div>
+              <h4>USB-C Fast Charger</h4>
+              <div class="price">15.00 LYD</div>
+            </div>
+          </div>
+
+          <!-- Vertical spacer to simulate real deep-scrolling page for below-fold tests -->
+          <div class="tall-spacer">
+            <p>⬇️ Scroll down for cashier payments and drawer settlement ⬇️</p>
+          </div>
+
+          <!-- Checkout actions located below the fold -->
+          <div class="checkout-section">
+            <h3>Finalize Customer Bill & Print Ticket</h3>
+            <p style="color: var(--text-muted); margin: 8px 0 20px;">Ensure cash received matches calculated total</p>
+            <button id="pay-button" class="btn-primary" style="font-size: 18px; padding: 14px 36px;" onclick="showReceipt()">
+              💳 Validate Payment (40.50 LYD)
+            </button>
+          </div>
+        </div>
+
+        <!-- Cart summary -->
+        <div class="cart-pane">
+          <h3>Customer Ticket</h3>
+          <div id="cart-items" class="cart-items">
+            <div class="cart-row"><span>Wireless Headphones</span><span>45.00 LYD</span></div>
+          </div>
+          <div class="field" style="margin-bottom: 0;">
+            <label for="discount-input">Discount (%) / نسبة الخصم</label>
+            <input id="discount-input" type="text" placeholder="10" value="10">
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 18px; margin-top: 8px;">
+            <span>Total After Discount:</span>
+            <span id="total-val" style="color: #34d399;">40.50 LYD</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal: Receipt -->
+  <div id="receipt-modal" class="receipt-modal">
+    <div class="receipt-card">
+      <div style="font-size: 40px; margin-bottom: 8px;">🧾</div>
+      <h3>Payment Approved!</h3>
+      <p style="color: #64748b; font-size: 13px; margin-bottom: 16px;">Taiba Electronics Store • Soluq Branch</p>
+      <div style="background: #f8fafc; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 14px; text-align: left;">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+          <span>Item:</span><strong>Wireless Headphones</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+          <span>Discount:</span><strong>10%</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-weight: bold; border-top: 1px dashed #cbd5e1; padding-top: 6px;">
+          <span>Total Paid:</span><span style="color:#059669">40.50 LYD (Cash)</span>
+        </div>
+      </div>
+      <button id="new-order-btn" class="btn-primary" onclick="resetOrder()" style="width: 100%;">
+        Start Next Order
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function handleLogin() {
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("pos-section").style.display = "block";
+    }
+
+    function addToCart(name, price) {
+      const container = document.getElementById("cart-items");
+      const row = document.createElement("div");
+      row.className = "cart-row";
+      row.innerHTML = `<span>${name}</span><span>${price.toFixed(2)} LYD</span>`;
+      container.appendChild(row);
+    }
+
+    function showReceipt() {
+      document.getElementById("receipt-modal").style.display = "flex";
+    }
+
+    function resetOrder() {
+      document.getElementById("receipt-modal").style.display = "none";
+      alert("Order saved to inventory!");
+    }
+  </script>
+</body>
+</html>

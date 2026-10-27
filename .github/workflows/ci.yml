@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test & Record Tutorial
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install System Dependencies (FFmpeg)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install edge-tts
+
+      - name: Install Node Dependencies
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Run Environment Doctor
+        run: npm run doctor
+
+      - name: Run Unit & Regression Tests
+        run: npm test
+
+      - name: Run Deterministic Offline Tutorial Flow
+        run: npm run test:example
+
+      - name: Verify Exported Video Quality (H.264 & AAC 1080p Compliance)
+        run: |
+          python3 skills/interactive-tutorial-video/scripts/quality_report.py --video output/videos/demo_tutorial.mp4
+
+      - name: Build and Verify Vertical Short (9:16)
+        run: |
+          npm run build:shorts output/videos/demo_tutorial.mp4 output/videos/demo_short.mp4 -- --title "POS Quick Guide"
+          python3 skills/interactive-tutorial-video/scripts/quality_report.py --video output/videos/demo_short.mp4
+
+      - name: Upload Recorded Video Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tutorial-recordings
+          path: output/videos/
+          if-no-files-found: ignore

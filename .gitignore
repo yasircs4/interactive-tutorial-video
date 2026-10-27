@@ -11,3 +11,5 @@ temp/
 __pycache__/
 *.pyc
 dist_videos/
+.youtube_upload_ledger.json
+.manifest_*.json
